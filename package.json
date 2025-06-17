@@ -1,0 +1,23 @@
+{
+  "name": "inject-content-message",
+  "version": "1.0.0",
+  "description": "A library for communication between browser extension inject and content scripts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "keywords": [
+    "browser-extension",
+    "content-script",
+    "inject-script",
+    "event-communication"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+} 
