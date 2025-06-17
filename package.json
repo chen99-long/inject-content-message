@@ -14,7 +14,11 @@
     "inject-script",
     "event-communication"
   ],
-  "author": "",
+  "author": "Chen Long <1422272907@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chen99-long/inject-content-message"
+  },
   "license": "MIT",
   "devDependencies": {
     "typescript": "^5.0.0",
