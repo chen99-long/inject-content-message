@@ -1,6 +1,6 @@
 {
   "name": "inject-content-message",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A library for communication between browser extension inject and content scripts",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
