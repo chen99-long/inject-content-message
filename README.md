@@ -33,11 +33,13 @@ interface ProtocolMap {
 const { sendEvent, listenEvent } = defineEventMessaging<ProtocolMap>();
 
 // 监听事件
-listenEvent('getData', async (id) => {
-  // 模拟异步操作
+const unsubscribe = listenEvent('getData', async (id) => {
   const data = await fetchData(id);
-  return data; // 这个返回值会作为回调结果
+  return data;
 });
+
+// 取消监听（防止内存泄漏）
+unsubscribe();
 
 // 发送普通事件
 sendEvent('log', 'Hello World');
@@ -60,6 +62,20 @@ console.log(result); // { id: 123, value: 'some data' }
 ### listenEvent<K extends keyof T>(name: K, callback: T[K])
 
 监听一个事件，返回取消监听的函数。如果事件需要返回结果，处理函数可以返回一个值或 Promise。
+
+**返回值**: 返回一个函数，调用该函数可以取消事件监听，防止内存泄漏。
+
+**使用示例**:
+```typescript
+// 监听事件
+const unsubscribe = listenEvent('getData', async (id) => {
+  const data = await fetchData(id);
+  return data;
+});
+
+// 取消监听（防止内存泄漏）
+unsubscribe();
+```
 
 ## License
 
