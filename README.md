@@ -12,11 +12,27 @@
 
 ## 安装
 
+### NPM 安装
+
 ```bash
 npm install inject-content-message
 ```
 
+### CDN 引入
+
+你也可以通过 script 标签直接引入：
+
+```html
+<!-- 引入完整版本 -->
+<script src="https://unpkg.com/inject-content-message@1.2.0/dist/index.umd.js"></script>
+
+<!-- 或引入压缩版本 -->
+<script src="https://unpkg.com/inject-content-message@1.2.0/dist/index.umd.min.js"></script>
+```
+
 ## 使用方法
+
+### ES 模块方式
 
 ```typescript
 import { defineEventMessaging } from 'inject-content-message';
@@ -48,6 +64,65 @@ sendEvent('log', 'Hello World');
 const result = await sendEvent('getData', 123);
 console.log(result); // { id: 123, value: 'some data' }
 ```
+
+### Script 标签方式
+
+通过 script 标签引入后，库提供了两种使用方式：
+
+#### 方式一：命名空间访问（推荐）
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://unpkg.com/inject-content-message@1.2.0/dist/index.umd.min.js"></script>
+</head>
+<body>
+    <script>
+        // 通过 InjectContentMessage 命名空间访问
+        const { defineEventMessaging } = InjectContentMessage;
+
+        // 创建事件通信实例
+        const { sendEvent, listenEvent } = defineEventMessaging();
+
+        // 使用方式与 ES 模块完全相同
+        const unsubscribe = listenEvent('getData', async (id) => {
+            return { id: id, value: `data for ${id}` };
+        });
+
+        sendEvent('getData', 123).then(result => {
+            console.log(result); // { id: 123, value: 'data for 123' }
+        });
+    </script>
+</body>
+</html>
+```
+
+#### 方式二：直接从 window 访问
+
+```html
+<script src="https://unpkg.com/inject-content-message@1.2.0/dist/index.umd.min.js"></script>
+<script>
+    // defineEventMessaging 函数会自动挂载到 window 对象
+    const { sendEvent, listenEvent } = defineEventMessaging();
+
+    // 使用方式完全相同
+    listenEvent('log', (message) => {
+        console.log('收到消息:', message);
+    });
+
+    sendEvent('log', 'Hello World!');
+</script>
+```
+
+## 构建版本
+
+该库提供了多种构建版本以适应不同的使用场景：
+
+- **ES Module** (`dist/index.esm.js`) - 用于现代打包工具（webpack、rollup、vite等）
+- **CommonJS** (`dist/index.cjs.js`) - 用于 Node.js 环境
+- **UMD** (`dist/index.umd.js`) - 用于浏览器 script 标签引入
+- **UMD Minified** (`dist/index.umd.min.js`) - 压缩版本，适合生产环境
 
 ## API
 
