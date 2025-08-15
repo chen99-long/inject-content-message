@@ -113,6 +113,25 @@
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 log(`\n📊 测试总结: ${passedCount}/${testCount} 通过`);
+
+                listenEvent("injectMessage",  async (data) => {
+                    console.log('收到消息:', data);
+                    return "Hello from injectscript";
+                });
+
+                async function testInjectMessage() {
+                    log('🚀 测试修复后的 sendEvent 方法');
+
+                    // 现在 sendEvent 支持任意类型数据的回调了！
+                    const result1 = await sendEvent("injectMessage", "Hello from content script");
+                    log(`✅ 字符串数据回调结果: ${result1}`);
+
+                    const result2 = await sendEvent("injectMessage", { message: "Hello from content script" });
+                    log(`✅ 对象数据回调结果: ${result2}`);
+                }
+
+                testInjectMessage();
+        
                 
                 if (passedCount === testCount) {
                     log('🎉 所有测试通过！修复成功！');
@@ -128,6 +147,9 @@
         
         // 运行测试
         runTests();
+
+
+
     </script>
 </body>
 </html>

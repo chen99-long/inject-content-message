@@ -7,36 +7,34 @@ export function defineEventMessaging<T extends { [K in keyof T]: (...args: any[]
   function sendEvent<K extends keyof T>(
     name: K,
     ...args: Parameters<T[K]>
-  ): ReturnType<T[K]> extends Promise<any> ? Promise<Awaited<ReturnType<T[K]>>> : void {
-    // 如果处理函数返回 Promise，则等待回调
-    if (typeof args[0] === 'object' && args[0] !== null) {
-      return new Promise((resolve) => {
-        const callbackId = generateId();
-        const callbackName = `${name as string}:callback:${callbackId}`;
+  ): Promise<any> {
+    return new Promise((resolve) => {
+      const callbackId = generateId();
+      const callbackName = `${name as string}:callback:${callbackId}`;
 
-        // 监听回调
-        const eventListener = ((event: CustomEvent<Awaited<ReturnType<T[K]>>>) => {
-          window.removeEventListener(callbackName, eventListener);
-          resolve(event.detail);
-        }) as EventListener;
+      // 设置超时（5秒后返回 undefined）
+      const timeoutId = setTimeout(() => {
+        window.removeEventListener(callbackName, eventListener);
+        resolve(undefined);
+      }, 5000);
 
-        window.addEventListener(callbackName, eventListener);
+      // 监听回调
+      const eventListener = ((event: CustomEvent<any>) => {
+        clearTimeout(timeoutId);
+        window.removeEventListener(callbackName, eventListener);
+        resolve(event.detail);
+      }) as EventListener;
 
-        // 发送事件
-        window.dispatchEvent(new CustomEvent(name as string, { 
-          detail: {
-            ...args[0],
-            _callbackId: callbackId
-          }
-        }));
-      }) as any;
-    }
+      window.addEventListener(callbackName, eventListener);
 
-    // 普通事件直接发送
-    window.dispatchEvent(new CustomEvent(name as string, { 
-      detail: args[0] 
-    }));
-    return undefined as any;
+      // 发送事件，将数据包装并添加 _callbackId
+      window.dispatchEvent(new CustomEvent(name as string, {
+        detail: {
+          data: args[0],
+          _callbackId: callbackId
+        }
+      }));
+    });
   }
 
   // 监听事件
@@ -49,9 +47,12 @@ export function defineEventMessaging<T extends { [K in keyof T]: (...args: any[]
       
       // 处理回调
       if (data && typeof data === 'object' && data !== null && '_callbackId' in data) {
-        const { _callbackId, ...rest } = data;
-        const result = callback(rest as any);
-        
+        const { _callbackId, data: actualData, ...rest } = data;
+
+        // 如果有 data 字段，说明是通过 sendEventWithCallback 发送的
+        const callbackData = actualData !== undefined ? actualData : rest;
+        const result = callback(callbackData as any);
+
         // 发送回调结果
         window.dispatchEvent(new CustomEvent(`${name as string}:callback:${_callbackId}`, {
           detail: result
