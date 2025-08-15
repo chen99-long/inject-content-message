@@ -1,5 +1,5 @@
 // 定义事件通信函数
-export function defineEventMessaging<T extends Record<string, (...args: any[]) => any>>() {
+export function defineEventMessaging<T extends { [K in keyof T]: (...args: any[]) => any }>() {
   // 生成唯一ID
   const generateId = () => Math.random().toString(36).slice(2);
 
