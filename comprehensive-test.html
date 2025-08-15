@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>全面测试</title>
+    <script src="./dist/index.umd.js"></script>
+</head>
+<body>
+    <h1>全面测试事件消息传递</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, isError = false) {
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            if (isError) {
+                div.style.color = 'red';
+            }
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        async function runTests() {
+            try {
+                const { defineEventMessaging } = InjectContentMessage;
+                const { sendEvent, listenEvent } = defineEventMessaging();
+                
+                log('✅ 初始化成功');
+                
+                // 测试计数器
+                let testCount = 0;
+                let passedCount = 0;
+                
+                function test(name, fn) {
+                    testCount++;
+                    try {
+                        fn();
+                        passedCount++;
+                        log(`✅ 测试 ${testCount}: ${name} - 通过`);
+                    } catch (error) {
+                        log(`❌ 测试 ${testCount}: ${name} - 失败: ${error.message}`, true);
+                    }
+                }
+                
+                // 设置监听器
+                const messages = [];
+                
+                listenEvent('stringEvent', (message) => {
+                    messages.push({ type: 'string', data: message });
+                    log(`📨 收到字符串事件: ${message}`);
+                });
+                
+                listenEvent('numberEvent', (num) => {
+                    messages.push({ type: 'number', data: num });
+                    log(`📨 收到数字事件: ${num}`);
+                });
+                
+                listenEvent('objectEvent', (obj) => {
+                    messages.push({ type: 'object', data: obj });
+                    log(`📨 收到对象事件: ${JSON.stringify(obj)}`);
+                });
+                
+                listenEvent('callbackEvent', async (data) => {
+                    log(`📨 收到回调事件: ${JSON.stringify(data)}`);
+                    return { result: `处理了 ${data.value}` };
+                });
+                
+                // 等待一下让监听器设置完成
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // 测试1: 字符串事件（之前会报错的情况）
+                test('字符串事件', () => {
+                    sendEvent('stringEvent', 'Hello World');
+                });
+                
+                // 测试2: 数字事件
+                test('数字事件', () => {
+                    sendEvent('numberEvent', 42);
+                });
+                
+                // 测试3: 布尔值事件
+                test('布尔值事件', () => {
+                    sendEvent('stringEvent', true);
+                });
+                
+                // 测试4: null 事件
+                test('null 事件', () => {
+                    sendEvent('stringEvent', null);
+                });
+                
+                // 测试5: undefined 事件
+                test('undefined 事件', () => {
+                    sendEvent('stringEvent', undefined);
+                });
+                
+                // 测试6: 普通对象事件
+                test('普通对象事件', () => {
+                    sendEvent('objectEvent', { name: 'test', value: 123 });
+                });
+                
+                // 测试7: 带回调的事件
+                test('带回调的事件', async () => {
+                    const result = await sendEvent('callbackEvent', { value: 'test data' });
+                    if (result && result.result === '处理了 test data') {
+                        log(`✅ 回调结果正确: ${JSON.stringify(result)}`);
+                    } else {
+                        throw new Error(`回调结果不正确: ${JSON.stringify(result)}`);
+                    }
+                });
+                
+                // 等待所有异步操作完成
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                log(`\n📊 测试总结: ${passedCount}/${testCount} 通过`);
+                
+                if (passedCount === testCount) {
+                    log('🎉 所有测试通过！修复成功！');
+                } else {
+                    log('⚠️ 部分测试失败，需要进一步检查', true);
+                }
+                
+            } catch (error) {
+                log(`❌ 测试过程中发生错误: ${error.message}`, true);
+                console.error(error);
+            }
+        }
+        
+        // 运行测试
+        runTests();
+    </script>
+</body>
+</html>

@@ -48,7 +48,7 @@ export function defineEventMessaging<T extends { [K in keyof T]: (...args: any[]
       const data = event.detail;
       
       // 处理回调
-      if (data && '_callbackId' in data) {
+      if (data && typeof data === 'object' && data !== null && '_callbackId' in data) {
         const { _callbackId, ...rest } = data;
         const result = callback(rest as any);
         

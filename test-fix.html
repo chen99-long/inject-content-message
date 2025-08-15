@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试修复</title>
+    <script src="./dist/index.umd.js"></script>
+</head>
+<body>
+    <h1>测试事件消息传递修复</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            const div = document.createElement('div');
+            div.textContent = message;
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        try {
+            // 通过 InjectContentMessage 命名空间访问
+            const { defineEventMessaging } = InjectContentMessage;
+            
+            // 创建事件通信实例
+            const { sendEvent, listenEvent } = defineEventMessaging();
+            
+            log('✅ 成功创建事件通信实例');
+            
+            // 监听普通字符串事件
+            const unsubscribe1 = listenEvent('log', (message) => {
+                log(`📨 收到普通消息: ${message}`);
+            });
+            
+            // 监听带回调的事件
+            const unsubscribe2 = listenEvent('getData', async (data) => {
+                log(`📨 收到数据请求: ${JSON.stringify(data)}`);
+                return { id: data.id, value: `处理后的数据 ${data.id}` };
+            });
+            
+            log('✅ 成功设置事件监听器');
+            
+            // 测试1: 发送普通字符串事件（这个之前会报错）
+            log('🚀 测试1: 发送普通字符串事件');
+            sendEvent('log', 'Hello from content script');
+            
+            // 测试2: 发送带回调的事件
+            log('🚀 测试2: 发送带回调的事件');
+            sendEvent('getData', { id: 123 }).then(result => {
+                log(`📨 收到回调结果: ${JSON.stringify(result)}`);
+            }).catch(error => {
+                log(`❌ 回调错误: ${error.message}`);
+            });
+            
+            // 测试3: 发送普通对象事件（不需要回调）
+            log('🚀 测试3: 发送普通对象事件');
+            sendEvent('log', { type: 'info', message: '这是一个对象消息' });
+            
+            log('✅ 所有测试已启动，等待结果...');
+            
+        } catch (error) {
+            log(`❌ 错误: ${error.message}`);
+            console.error(error);
+        }
+    </script>
+</body>
+</html>

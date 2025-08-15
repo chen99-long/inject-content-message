@@ -152,6 +152,19 @@ const unsubscribe = listenEvent('getData', async (id) => {
 unsubscribe();
 ```
 
+## 更新日志
+
+### v1.2.2
+- 🐛 修复了当发送非对象类型数据时出现的 `Cannot use 'in' operator` 错误
+- ✅ 现在可以安全地发送字符串、数字、布尔值等原始类型数据
+- 🔧 改进了类型检查逻辑，确保只有对象类型才检查 `_callbackId` 属性
+
+### v1.2.1
+- 📦 优化构建配置
+
+### v1.2.0
+- 🎉 初始版本发布
+
 ## License
 
-MIT 
+MIT
