@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>回调示例</title>
+    <script src="./dist/index.umd.js"></script>
+</head>
+<body>
+    <h1>事件回调示例</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        async function runExample() {
+            try {
+                const { defineEventMessaging } = InjectContentMessage;
+                const { sendEvent, sendEventWithCallback, listenEvent } = defineEventMessaging();
+                
+                log('🎯 设置事件监听器...');
+                
+                // 监听器：处理消息并返回响应
+                listenEvent("injectMessage", async (message) => {
+                    log(`📨 监听器收到消息: ${JSON.stringify(message)}`);
+                    
+                    // 模拟一些异步处理
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    return `Hello from inject script! 收到了: ${JSON.stringify(message)}`;
+                });
+                
+                log('✅ 监听器设置完成');
+                
+                // 等待一下确保监听器已设置
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                log('<br>📤 <strong>方法1: 使用 sendEventWithCallback（推荐）</strong>');
+                log('发送字符串数据...');
+                
+                const result1 = await sendEventWithCallback("injectMessage", "Hello from content script");
+                log(`✅ 收到回调: <span style="color: green;">${result1}</span>`);
+                
+                log('<br>📤 <strong>方法2: 使用 sendEventWithCallback 发送复杂数据</strong>');
+                
+                const result2 = await sendEventWithCallback("injectMessage", {
+                    type: "request",
+                    data: { id: 123, name: "test" },
+                    timestamp: Date.now()
+                });
+                log(`✅ 收到回调: <span style="color: green;">${result2}</span>`);
+                
+                log('<br>📤 <strong>方法3: 使用原来的 sendEvent（需要对象格式）</strong>');
+                
+                const result3 = await sendEvent("injectMessage", { 
+                    message: "Hello from content script via sendEvent" 
+                });
+                log(`✅ 收到回调: <span style="color: green;">${result3}</span>`);
+                
+                log('<br>📤 <strong>方法4: 发送字符串给 sendEvent（不会有回调）</strong>');
+                
+                const result4 = await sendEvent("injectMessage", "This won't get a callback");
+                log(`⚠️ sendEvent 字符串结果: <span style="color: orange;">${result4}</span> (undefined，因为不是对象)`);
+                
+                log('<br>🎉 <strong>所有测试完成！</strong>');
+                
+            } catch (error) {
+                log(`❌ 错误: ${error.message}`);
+                console.error(error);
+            }
+        }
+        
+        // 运行示例
+        runExample();
+    </script>
+</body>
+</html>
