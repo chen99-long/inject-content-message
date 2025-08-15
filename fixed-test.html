@@ -35,6 +35,11 @@
                 
                 // 等待一下确保监听器已设置
                 await new Promise(resolve => setTimeout(resolve, 200));
+
+                sendEvent("injectMessage", "Hello from content script").then(res=>{
+                    console.log(111,res);
+                    
+                })
                 
                 log('<br>📤 <strong>测试1: 发送字符串数据</strong>');
                 const result1 = await sendEvent("injectMessage", "Hello from content script");

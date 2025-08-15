@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>模拟插件环境测试</title>
+    <script src="./dist/index.umd.js"></script>
+</head>
+<body>
+    <h1>模拟 Content Script 和 Inject Script 通信</h1>
+    <div id="output"></div>
+    <button id="testBtn">测试通信</button>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, source = '') {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}] ${source}</strong> ${message}`;
+            output.appendChild(div);
+            console.log(`${source}: ${message}`);
+        }
+        
+        // 模拟 Inject Script 环境
+        function setupInjectScript() {
+            log('设置 Inject Script 监听器...', 'INJECT');
+            
+            const { defineEventMessaging } = InjectContentMessage;
+            const { sendEvent, listenEvent } = defineEventMessaging();
+            
+            // 监听来自 content script 的消息
+            listenEvent("fromContent", async (message) => {
+                log(`收到来自 Content Script 的消息: ${JSON.stringify(message)}`, 'INJECT');
+                
+                // 模拟一些处理
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                return `Inject Script 回复: 已处理 ${JSON.stringify(message)}`;
+            });
+            
+            // 监听来自 content script 的另一种消息
+            listenEvent("getData", async (data) => {
+                log(`收到数据请求: ${JSON.stringify(data)}`, 'INJECT');
+                return { 
+                    id: data.id, 
+                    value: `来自 inject script 的数据 ${data.id}`,
+                    timestamp: Date.now()
+                };
+            });
+            
+            log('✅ Inject Script 监听器设置完成', 'INJECT');
+            
+            return { sendEvent, listenEvent };
+        }
+        
+        // 模拟 Content Script 环境
+        function setupContentScript() {
+            log('设置 Content Script...', 'CONTENT');
+            
+            const { defineEventMessaging } = InjectContentMessage;
+            const { sendEvent, listenEvent } = defineEventMessaging();
+            
+            log('✅ Content Script 设置完成', 'CONTENT');
+            
+            return { sendEvent, listenEvent };
+        }
+        
+        // 初始化
+        const injectScript = setupInjectScript();
+        const contentScript = setupContentScript();
+        
+        // 测试函数
+        async function testCommunication() {
+            try {
+                log('<br>🚀 开始测试通信...', 'TEST');
+                
+                // 测试1: Content Script 发送字符串消息给 Inject Script
+                log('测试1: 发送字符串消息', 'CONTENT');
+                const result1 = await contentScript.sendEvent("fromContent", "Hello from Content Script!");
+                log(`✅ 收到回调: ${result1}`, 'CONTENT');
+                
+                // 测试2: Content Script 请求数据
+                log('<br>测试2: 请求数据', 'CONTENT');
+                const result2 = await contentScript.sendEvent("getData", { id: 123 });
+                log(`✅ 收到数据: ${JSON.stringify(result2)}`, 'CONTENT');
+                
+                // 测试3: 发送复杂对象
+                log('<br>测试3: 发送复杂对象', 'CONTENT');
+                const result3 = await contentScript.sendEvent("fromContent", {
+                    type: "complex",
+                    data: { name: "test", values: [1, 2, 3] },
+                    timestamp: Date.now()
+                });
+                log(`✅ 收到回调: ${result3}`, 'CONTENT');
+                
+                log('<br>🎉 所有测试完成！', 'TEST');
+                
+            } catch (error) {
+                log(`❌ 测试失败: ${error.message}`, 'ERROR');
+                console.error(error);
+            }
+        }
+        
+        // 绑定测试按钮
+        document.getElementById('testBtn').addEventListener('click', testCommunication);
+        
+        // 页面加载完成后自动运行一次测试
+        setTimeout(testCommunication, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>插件测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .instruction {
+            background: #f0f8ff;
+            border: 1px solid #0066cc;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>inject-content-message 库插件测试页面</h1>
+    
+    <div class="instruction">
+        <h2>📋 测试步骤：</h2>
+        <div class="step">
+            <strong>1.</strong> 打开 Chrome 浏览器的扩展管理页面 (chrome://extensions/)
+        </div>
+        <div class="step">
+            <strong>2.</strong> 开启"开发者模式"
+        </div>
+        <div class="step">
+            <strong>3.</strong> 点击"加载已解压的扩展程序"
+        </div>
+        <div class="step">
+            <strong>4.</strong> 选择 <code>test-extension</code> 文件夹
+        </div>
+        <div class="step">
+            <strong>5.</strong> 刷新这个页面
+        </div>
+        <div class="step">
+            <strong>6.</strong> 打开浏览器开发者工具 (F12)，查看 Console 输出
+        </div>
+        <div class="step">
+            <strong>7.</strong> 观察页面右上角是否出现绿色通知框
+        </div>
+    </div>
+    
+    <div class="instruction">
+        <h2>🔍 预期结果：</h2>
+        <ul>
+            <li>Console 中应该看到 Content Script 和 Inject Script 的日志</li>
+            <li>应该看到成功的通信测试结果</li>
+            <li>页面右上角应该出现绿色通知框显示收到的消息</li>
+            <li>如果看到回调结果，说明双向通信成功</li>
+        </ul>
+    </div>
+    
+    <div class="instruction">
+        <h2>🐛 如果出现问题：</h2>
+        <ul>
+            <li>检查 Console 是否有错误信息</li>
+            <li>确认插件已正确加载</li>
+            <li>尝试刷新页面</li>
+            <li>检查是否有 CORS 或其他安全策略限制</li>
+        </ul>
+    </div>
+    
+    <h2>📄 当前页面信息：</h2>
+    <p><strong>URL:</strong> <span id="url"></span></p>
+    <p><strong>时间:</strong> <span id="time"></span></p>
+    
+    <script>
+        document.getElementById('url').textContent = window.location.href;
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        
+        // 页面级别的日志，用于调试
+        console.log('📄 测试页面已加载:', window.location.href);
+        
+        // 监听可能的错误
+        window.addEventListener('error', (e) => {
+            console.error('页面错误:', e.error);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>调试 window vs document 事件传递</title>
+    <script src="./dist/index.umd.js"></script>
+</head>
+<body>
+    <h1>调试事件传递机制</h1>
+    <div id="output"></div>
+    <button id="testWindow">测试 window 事件</button>
+    <button id="testDocument">测试 document 事件</button>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        // 模拟两个不同的执行环境
+        function createIsolatedContext() {
+            // 创建一个 iframe 来模拟不同的 window 环境
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            
+            const iframeWindow = iframe.contentWindow;
+            const iframeDocument = iframe.contentDocument;
+            
+            return { window: iframeWindow, document: iframeDocument };
+        }
+        
+        // 测试 window 事件传递
+        function testWindowEvents() {
+            log('<br>🧪 测试 window 事件传递...');
+            
+            const context = createIsolatedContext();
+            
+            // 在主 window 监听
+            window.addEventListener('test-window-event', (e) => {
+                log('✅ 主 window 收到事件: ' + e.detail);
+            });
+            
+            // 在 iframe window 监听
+            context.window.addEventListener('test-window-event', (e) => {
+                log('✅ iframe window 收到事件: ' + e.detail);
+            });
+            
+            // 从主 window 发送
+            log('📤 从主 window 发送事件...');
+            window.dispatchEvent(new CustomEvent('test-window-event', { detail: '来自主window' }));
+            
+            // 从 iframe window 发送
+            setTimeout(() => {
+                log('📤 从 iframe window 发送事件...');
+                context.window.dispatchEvent(new CustomEvent('test-window-event', { detail: '来自iframe window' }));
+            }, 100);
+        }
+        
+        // 测试 document 事件传递
+        function testDocumentEvents() {
+            log('<br>🧪 测试 document 事件传递...');
+            
+            const context = createIsolatedContext();
+            
+            // 在主 document 监听
+            document.addEventListener('test-document-event', (e) => {
+                log('✅ 主 document 收到事件: ' + e.detail);
+            });
+            
+            // 在 iframe document 监听
+            context.document.addEventListener('test-document-event', (e) => {
+                log('✅ iframe document 收到事件: ' + e.detail);
+            });
+            
+            // 从主 document 发送
+            log('📤 从主 document 发送事件...');
+            document.dispatchEvent(new CustomEvent('test-document-event', { detail: '来自主document' }));
+            
+            // 从 iframe document 发送
+            setTimeout(() => {
+                log('📤 从 iframe document 发送事件...');
+                context.document.dispatchEvent(new CustomEvent('test-document-event', { detail: '来自iframe document' }));
+            }, 100);
+        }
+        
+        // 测试真实的库行为
+        function testLibraryBehavior() {
+            log('<br>🧪 测试库的实际行为...');
+            
+            // 环境1：使用 window
+            const { defineEventMessaging: defineWithWindow } = InjectContentMessage;
+            
+            // 修改库临时使用 window（用于对比）
+            const originalLib = defineWithWindow();
+            
+            // 环境1监听
+            originalLib.listenEvent('testMessage', (data) => {
+                log('📨 环境1收到消息: ' + JSON.stringify(data));
+                return '环境1的回复';
+            });
+            
+            // 环境1发送
+            setTimeout(async () => {
+                log('📤 环境1发送消息...');
+                const result = await originalLib.sendEvent('testMessage', 'Hello from 环境1');
+                log('🔄 环境1收到回调: ' + result);
+            }, 200);
+        }
+        
+        // 绑定按钮
+        document.getElementById('testWindow').addEventListener('click', testWindowEvents);
+        document.getElementById('testDocument').addEventListener('click', testDocumentEvents);
+        
+        // 自动运行测试
+        setTimeout(() => {
+            testWindowEvents();
+            setTimeout(testDocumentEvents, 1000);
+            setTimeout(testLibraryBehavior, 2000);
+        }, 500);
+    </script>
+</body>
+</html>

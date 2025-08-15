@@ -1,7 +1,14 @@
 // 定义事件通信函数
-export function defineEventMessaging<T extends { [K in keyof T]: (...args: any[]) => any }>() {
+export function defineEventMessaging<T extends { [K in keyof T]: (...args: any[]) => any }>(debug: boolean = false) {
   // 生成唯一ID
   const generateId = () => Math.random().toString(36).slice(2);
+
+  // 调试日志函数
+  const log = (message: string, ...args: any[]) => {
+    if (debug) {
+      console.log(`[EventMessaging] ${message}`, ...args);
+    }
+  };
 
   // 发送事件
   function sendEvent<K extends keyof T>(
@@ -12,14 +19,18 @@ export function defineEventMessaging<T extends { [K in keyof T]: (...args: any[]
       const callbackId = generateId();
       const callbackName = `${name as string}:callback:${callbackId}`;
 
+      log(`发送事件: ${name as string}, callbackId: ${callbackId}`);
+
       // 设置超时（5秒后返回 undefined）
       const timeoutId = setTimeout(() => {
+        log(`事件超时: ${name as string}, callbackId: ${callbackId}`);
         window.removeEventListener(callbackName, eventListener);
         resolve(undefined);
       }, 5000);
 
       // 监听回调
       const eventListener = ((event: CustomEvent<any>) => {
+        log(`收到回调: ${callbackName}`, event.detail);
         clearTimeout(timeoutId);
         window.removeEventListener(callbackName, eventListener);
         resolve(event.detail);
@@ -44,7 +55,8 @@ export function defineEventMessaging<T extends { [K in keyof T]: (...args: any[]
   ) {
     const eventListener = ((event: CustomEvent<Parameters<T[K]>[0]>) => {
       const data = event.detail;
-      
+      log(`监听到事件: ${name as string}`, data);
+
       // 处理回调
       if (data && typeof data === 'object' && data !== null && '_callbackId' in data) {
         const { _callbackId, data: actualData, ...rest } = data;
@@ -53,10 +65,18 @@ export function defineEventMessaging<T extends { [K in keyof T]: (...args: any[]
         const callbackData = actualData !== undefined ? actualData : rest;
         const result = callback(callbackData as any);
 
-        // 发送回调结果
-        window.dispatchEvent(new CustomEvent(`${name as string}:callback:${_callbackId}`, {
-          detail: result
-        }));
+        // 处理 Promise 结果
+        Promise.resolve(result).then(resolvedResult => {
+          log(`发送回调: ${name as string}:callback:${_callbackId}`, resolvedResult);
+          window.dispatchEvent(new CustomEvent(`${name as string}:callback:${_callbackId}`, {
+            detail: resolvedResult
+          }));
+        }).catch(error => {
+          log(`回调错误: ${name as string}:callback:${_callbackId}`, error);
+          window.dispatchEvent(new CustomEvent(`${name as string}:callback:${_callbackId}`, {
+            detail: undefined
+          }));
+        });
       } else {
         callback(data);
       }
